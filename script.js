@@ -1,6 +1,7 @@
 // --- CONFIGURATION ---
-// IMPORTANT: Replace these placeholder URLs with your actual URLs.
-const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/ghiassabir/New-Approach-Quiz-and-Dashboard-11-june/main/data/question_bank.csv'; // e.g., https://raw.githubusercontent.com/your-username/your-repo/main/data/question_bank.csv
+// The URL to the RAW CSV file on GitHub.
+const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/ghiassabir/New-Approach-Quiz-and-Dashboard-11-june/main/data/question_bank.csv';
+// The URL of your deployed Google Apps Script Web App.
 const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwAA7VRzbnJy4XMLJUMlS6X4aqUC2acuQQLbOL1VbV--m6sdXUJ17MswbI855eFTSxd/exec';
 
 // --- DOM ELEMENT REFERENCES ---
@@ -35,7 +36,6 @@ let quizTimerInterval;
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     startButton.addEventListener('click', startQuiz);
-    // Check for a saved email to make it easier for returning students
     const savedEmail = localStorage.getItem('satHubStudentEmail');
     if (savedEmail) {
         studentEmailInput.value = savedEmail;
@@ -65,32 +65,25 @@ function startQuiz() {
 }
 
 /**
- * Fetches the CSV from GitHub (or uses dummy data) and filters for the specific quiz.
+ * Fetches the CSV from GitHub and filters for the questions for the specific quiz.
  * @param {string} quizName - The name of the quiz to filter by.
  */
 function loadQuestions(quizName) {
     startButton.textContent = "Loading...";
     startButton.disabled = true;
 
-    // For this blueprint, we use embedded dummy data.
-    // In production, you would uncomment the Papa.parse call.
-    const allData = getDummyData(); 
-    processQuestionData(allData, quizName);
-    
-    /*
-    // --- PRODUCTION CODE ---
     Papa.parse(GITHUB_CSV_URL, {
         download: true,
         header: true,
+        skipEmptyLines: true,
         complete: (results) => processQuestionData(results.data, quizName),
         error: (error) => {
             console.error("PapaParse Error:", error);
-            alert("Failed to load quiz data. Please check the CSV URL in script.js.");
+            alert("Failed to load quiz data. Please check the CSV URL in script.js and ensure the file is accessible and correctly formatted.");
             startButton.textContent = "Start Quiz";
             startButton.disabled = false;
         }
     });
-    */
 }
 
 /**
@@ -109,18 +102,13 @@ function processQuestionData(data, quizName) {
         buildQuestionNavigator();
         renderQuestion();
     } else {
-        alert(`Error: No questions found for quiz named "${quizName}".`);
+        alert(`Error: No questions found for quiz named "${quizName}". Please check your CSV and the quiz name in the URL.`);
         startButton.textContent = "Start Quiz";
         startButton.disabled = false;
     }
 }
 
-
 // --- RENDERING & UI ---
-
-/**
- * Renders the current question, its options, and associated image if available.
- */
 function renderQuestion() {
     optionsContainer.innerHTML = '';
     questionImage.classList.add('hidden');
@@ -138,9 +126,7 @@ function renderQuestion() {
         if (optionText) {
             const optionElement = document.createElement('div');
             optionElement.className = 'answer-option p-4 rounded-lg cursor-pointer flex items-start';
-            optionElement.innerHTML = `
-                <input type="radio" name="answer" value="${optionText}" class="mr-3 mt-1 shrink-0">
-                <label class="cursor-pointer w-full">${optionText}</label>`;
+            optionElement.innerHTML = `<label class="flex items-center cursor-pointer w-full"><input type="radio" name="answer" value="${optionText}" class="mr-3 mt-1 shrink-0"><span>${optionText}</span></label>`;
             
             optionElement.addEventListener('click', () => {
                 optionElement.querySelector('input').checked = true;
@@ -160,9 +146,6 @@ function renderQuestion() {
     questionStartTime = Date.now();
 }
 
-/**
- * Updates all UI components at once.
- */
 function updateUI() {
     updateNavigation();
     updateProgressBar();
@@ -170,9 +153,6 @@ function updateUI() {
     updateMarkForReviewButton();
 }
 
-/**
- * Creates the question navigator buttons on the side panel.
- */
 function buildQuestionNavigator() {
     questionNavigator.innerHTML = '';
     currentQuizQuestions.forEach((q, index) => {
@@ -185,9 +165,6 @@ function buildQuestionNavigator() {
     });
 }
 
-/**
- * Updates the visual state of the question navigator (current, answered, marked).
- */
 function updateNavigator() {
     const buttons = questionNavigator.querySelectorAll('.question-nav-btn');
     buttons.forEach((btn, index) => {
@@ -201,9 +178,6 @@ function updateNavigator() {
     });
 }
 
-/**
- * Shows/hides the Previous, Next, and Submit buttons based on the current question index.
- */
 function updateNavigation() {
     prevButton.disabled = currentQuestionIndex === 0;
     const isLastQuestion = currentQuestionIndex === currentQuizQuestions.length - 1;
@@ -211,9 +185,6 @@ function updateNavigation() {
     submitButton.classList.toggle('hidden', !isLastQuestion);
 }
 
-/**
- * Updates the visual progress bar and text.
- */
 function updateProgressBar() {
     const progress = ((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100;
     progressBar.style.width = `${progress}%`;
@@ -303,9 +274,13 @@ function recordAnswer() {
 }
 
 function submitQuiz() {
-    clearInterval(quizTimerInterval); // Stop the timer
+    clearInterval(quizTimerInterval);
     submitButton.textContent = "Submitting...";
     submitButton.disabled = true;
+
+    // --- OPTIMISTIC UPDATE: Show confirmation immediately ---
+    quizArea.classList.add('hidden');
+    confirmationScreen.classList.remove('hidden');
 
     const submissionData = currentQuizQuestions.map(question => {
         const studentResponse = studentAnswers[question.question_id];
@@ -315,35 +290,26 @@ function submitQuiz() {
             quiz_name: question.quiz_name,
             question_id: question.question_id,
             student_answer: studentResponse ? studentResponse.answer : 'NO_ANSWER',
-            is_correct: studentResponse ? studentResponse.answer === question.correct_answer : false,
+            is_correct: studentResponse ? String(studentResponse.answer).trim() === String(question.correct_answer).trim() : false,
             time_spent_seconds: studentResponse ? studentResponse.timeSpent : 0
         };
     });
     
-    console.log("Submitting Data:", submissionData);
+    console.log("Submitting Data Silently:", submissionData);
     
+    // --- Send data to Google Apps Script in the background ---
     fetch(APPS_SCRIPT_WEB_APP_URL, {
         method: 'POST',
-        mode: 'no-cors',
+        mode: 'no-cors', // Use 'no-cors' for simple POST requests to Apps Script
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submissionData),
     })
     .then(() => {
-        console.log("Submission successful.");
-        quizArea.classList.add('hidden');
-        confirmationScreen.classList.remove('hidden');
+        console.log("Data sent to Apps Script successfully.");
     })
     .catch(error => {
-        console.error('Error submitting quiz:', error);
-        alert('There was an error submitting your quiz. Please try again.');
-        submitButton.textContent = "Submit Quiz";
-        submitButton.disabled = false;
+        // Even if this fails, the user has already seen the success message.
+        // We log the error for our own debugging purposes.
+        console.error('Error submitting quiz in the background:', error);
     });
-}
-
-// --- DUMMY DATA ---
-function getDummyData() {
-    return [
-        {"question_id":"EOC-M-C1-AlgebraBasics-Q1","quiz_name":"EOC-M-C1-AlgebraBasics","subject":"Math","domain":"Algebra","skill_tag":"Linear equations in 1 variable","difficulty":"Easy","question_text":"If 5x - 7 = 28, what is the value of x?","image_url":"","option_a":"5","option_b":"7","option_c":"9","option_d":"35","correct_answer":"7","explanation_original":"Add 7 to both sides..."},
-        {"question_id":"EOC-M-C1-AlgebraBasics-Q2","quiz_name":"EOC-M-C1-AlgebraBasics","subject":"Math","domain":"Algebra","skill_tag":"Linear inequalities","difficulty":"Medium","question_text":"Which of the following numbers is a solution to the inequality 3(y - 2) < 15?","image_url":"","option_a":"-2","option_b":"7","option_c":"8","option_d":"10","correct_answer":"-2","explanation_original":"Distribute the 3..."}
-    ];
 }

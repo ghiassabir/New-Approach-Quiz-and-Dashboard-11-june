@@ -1,6 +1,6 @@
 // --- CONFIGURATION ---
-const APPS_SCRIPT_WEB_APP_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
-
+const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwAA7VRzbnJy4XMLJUMlS6X4aqUC2acuQQLbOL1VbV--m6sdXUJ17MswbI855eFTSxd/exec';
+const GITHUB_CSV_URL = '';
 // --- DOM ELEMENT REFERENCES ---
 const welcomeScreen = document.getElementById('welcomeScreen');
 const quizArea = document.getElementById('quizArea');

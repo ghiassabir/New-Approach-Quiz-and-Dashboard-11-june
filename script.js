@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
 // IMPORTANT: Replace these placeholder URLs with your actual URLs.
-const GITHUB_CSV_URL = 'YOUR_GITHUB_RAW_CSV_URL_HERE'; // e.g., https://raw.githubusercontent.com/your-username/your-repo/main/data/question_bank.csv
-const APPS_SCRIPT_WEB_APP_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+const GITHUB_CSV_URL = 'https://github.com/ghiassabir/New-Approach-Quiz-and-Dashboard-11-june/blob/main/data/question_bank.csv'; // e.g., https://raw.githubusercontent.com/your-username/your-repo/main/data/question_bank.csv
+const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwAA7VRzbnJy4XMLJUMlS6X4aqUC2acuQQLbOL1VbV--m6sdXUJ17MswbI855eFTSxd/exec';
 
 // --- DOM ELEMENT REFERENCES ---
 const welcomeScreen = document.getElementById('welcomeScreen');

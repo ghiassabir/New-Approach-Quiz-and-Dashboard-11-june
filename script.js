@@ -1,6 +1,8 @@
 // --- CONFIGURATION ---
-const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwAA7VRzbnJy4XMLJUMlS6X4aqUC2acuQQLbOL1VbV--m6sdXUJ17MswbI855eFTSxd/exec';
-const GITHUB_CSV_URL = 'https://github.com/ghiassabir/New-Approach-Quiz-and-Dashboard-11-june/blob/main/data/question_bank.csv';
+// IMPORTANT: Replace these placeholder URLs with your actual URLs.
+const GITHUB_CSV_URL = 'YOUR_GITHUB_RAW_CSV_URL_HERE'; // e.g., https://raw.githubusercontent.com/your-username/your-repo/main/data/question_bank.csv
+const APPS_SCRIPT_WEB_APP_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+
 // --- DOM ELEMENT REFERENCES ---
 const welcomeScreen = document.getElementById('welcomeScreen');
 const quizArea = document.getElementById('quizArea');
@@ -8,6 +10,7 @@ const confirmationScreen = document.getElementById('confirmationScreen');
 const startButton = document.getElementById('startButton');
 const studentEmailInput = document.getElementById('studentEmail');
 const quizTitle = document.getElementById('quizTitle');
+const timerDisplay = document.getElementById('timer');
 const questionText = document.getElementById('questionText');
 const questionImage = document.getElementById('questionImage');
 const optionsContainer = document.getElementById('optionsContainer');
@@ -27,16 +30,21 @@ let markedForReview = new Set();
 let currentQuestionIndex = 0;
 let questionStartTime = 0;
 let studentEmail = '';
+let quizTimerInterval;
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     startButton.addEventListener('click', startQuiz);
+    // Check for a saved email to make it easier for returning students
     const savedEmail = localStorage.getItem('satHubStudentEmail');
     if (savedEmail) {
         studentEmailInput.value = savedEmail;
     }
 });
 
+/**
+ * Validates email, gets the quiz name from the URL, and starts the question loading process.
+ */
 function startQuiz() {
     studentEmail = studentEmailInput.value;
     if (!studentEmail || !studentEmail.includes('@')) {
@@ -49,29 +57,70 @@ function startQuiz() {
     let quizName = urlParams.get('quiz');
     if (!quizName) {
         quizName = "EOC-M-C1-AlgebraBasics"; // Fallback for testing
+        alert(`No quiz name found in URL. Loading default test: ${quizName}`);
     }
 
     quizTitle.textContent = quizName.replace(/_/g, ' ');
     loadQuestions(quizName);
 }
 
+/**
+ * Fetches the CSV from GitHub (or uses dummy data) and filters for the specific quiz.
+ * @param {string} quizName - The name of the quiz to filter by.
+ */
 function loadQuestions(quizName) {
+    startButton.textContent = "Loading...";
+    startButton.disabled = true;
+
     // For this blueprint, we use embedded dummy data.
-    // In production, this would be a Papa.parse call to your GitHub CSV URL.
+    // In production, you would uncomment the Papa.parse call.
     const allData = getDummyData(); 
-    currentQuizQuestions = allData.filter(q => q.quiz_name === quizName);
+    processQuestionData(allData, quizName);
+    
+    /*
+    // --- PRODUCTION CODE ---
+    Papa.parse(GITHUB_CSV_URL, {
+        download: true,
+        header: true,
+        complete: (results) => processQuestionData(results.data, quizName),
+        error: (error) => {
+            console.error("PapaParse Error:", error);
+            alert("Failed to load quiz data. Please check the CSV URL in script.js.");
+            startButton.textContent = "Start Quiz";
+            startButton.disabled = false;
+        }
+    });
+    */
+}
+
+/**
+ * Processes the loaded question data and starts the quiz.
+ * @param {Array} data - The full dataset from the CSV.
+ * @param {string} quizName - The name of the quiz to run.
+ */
+function processQuestionData(data, quizName) {
+    allQuestions = data;
+    currentQuizQuestions = allQuestions.filter(q => q.quiz_name === quizName);
 
     if (currentQuizQuestions.length > 0) {
         welcomeScreen.classList.add('hidden');
         quizArea.classList.remove('hidden');
+        startQuizTimer(currentQuizQuestions.length * 90); // Example: 90 seconds per question
         buildQuestionNavigator();
         renderQuestion();
     } else {
-        alert(`Error: No questions found for quiz: ${quizName}`);
+        alert(`Error: No questions found for quiz named "${quizName}".`);
+        startButton.textContent = "Start Quiz";
+        startButton.disabled = false;
     }
 }
 
+
 // --- RENDERING & UI ---
+
+/**
+ * Renders the current question, its options, and associated image if available.
+ */
 function renderQuestion() {
     optionsContainer.innerHTML = '';
     questionImage.classList.add('hidden');
@@ -79,7 +128,7 @@ function renderQuestion() {
     const question = currentQuizQuestions[currentQuestionIndex];
     questionText.innerHTML = question.question_text;
 
-    if (question.image_url) {
+    if (question.image_url && question.image_url.trim() !== "") {
         questionImage.src = question.image_url;
         questionImage.classList.remove('hidden');
     }
@@ -98,7 +147,8 @@ function renderQuestion() {
                 handleOptionSelection();
             });
 
-            if (studentAnswers[question.question_id] && studentAnswers[question.question_id].answer === optionText) {
+            const questionId = question.question_id;
+            if (studentAnswers[questionId] && studentAnswers[questionId].answer === optionText) {
                 optionElement.classList.add('selected');
                 optionElement.querySelector('input').checked = true;
             }
@@ -110,6 +160,9 @@ function renderQuestion() {
     questionStartTime = Date.now();
 }
 
+/**
+ * Updates all UI components at once.
+ */
 function updateUI() {
     updateNavigation();
     updateProgressBar();
@@ -117,6 +170,9 @@ function updateUI() {
     updateMarkForReviewButton();
 }
 
+/**
+ * Creates the question navigator buttons on the side panel.
+ */
 function buildQuestionNavigator() {
     questionNavigator.innerHTML = '';
     currentQuizQuestions.forEach((q, index) => {
@@ -129,6 +185,9 @@ function buildQuestionNavigator() {
     });
 }
 
+/**
+ * Updates the visual state of the question navigator (current, answered, marked).
+ */
 function updateNavigator() {
     const buttons = questionNavigator.querySelectorAll('.question-nav-btn');
     buttons.forEach((btn, index) => {
@@ -142,6 +201,9 @@ function updateNavigator() {
     });
 }
 
+/**
+ * Shows/hides the Previous, Next, and Submit buttons based on the current question index.
+ */
 function updateNavigation() {
     prevButton.disabled = currentQuestionIndex === 0;
     const isLastQuestion = currentQuestionIndex === currentQuizQuestions.length - 1;
@@ -149,6 +211,9 @@ function updateNavigation() {
     submitButton.classList.toggle('hidden', !isLastQuestion);
 }
 
+/**
+ * Updates the visual progress bar and text.
+ */
 function updateProgressBar() {
     const progress = ((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100;
     progressBar.style.width = `${progress}%`;
@@ -178,14 +243,18 @@ function jumpToQuestion(index) {
 
 nextButton.addEventListener('click', () => {
     recordAnswer();
-    currentQuestionIndex++;
-    renderQuestion();
+    if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+    }
 });
 
 prevButton.addEventListener('click', () => {
     recordAnswer();
-    currentQuestionIndex--;
-    renderQuestion();
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderQuestion();
+    }
 });
 
 submitButton.addEventListener('click', () => {
@@ -200,10 +269,24 @@ markReviewBtn.addEventListener('click', () => {
     } else {
         markedForReview.add(questionId);
     }
-    updateNavigator();
-    updateMarkForReviewButton();
+    updateUI();
 });
 
+// --- TIMER LOGIC ---
+function startQuizTimer(durationInSeconds) {
+    let timer = durationInSeconds;
+    quizTimerInterval = setInterval(() => {
+        const minutes = Math.floor(timer / 60);
+        let seconds = timer % 60;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        timerDisplay.textContent = `${minutes}:${seconds}`;
+        if (--timer < 0) {
+            clearInterval(quizTimerInterval);
+            alert("Time's up!");
+            submitQuiz();
+        }
+    }, 1000);
+}
 
 // --- DATA LOGIC ---
 function recordAnswer() {
@@ -216,21 +299,51 @@ function recordAnswer() {
             answer: selectedOption.value,
             timeSpent: (existingTime + timeSpent).toFixed(2)
         };
-        updateNavigator();
     }
 }
 
 function submitQuiz() {
-    // ... (Submission logic remains the same as previous blueprint)
+    clearInterval(quizTimerInterval); // Stop the timer
+    submitButton.textContent = "Submitting...";
+    submitButton.disabled = true;
+
+    const submissionData = currentQuizQuestions.map(question => {
+        const studentResponse = studentAnswers[question.question_id];
+        return {
+            timestamp: new Date().toISOString(),
+            student_gmail_id: studentEmail,
+            quiz_name: question.quiz_name,
+            question_id: question.question_id,
+            student_answer: studentResponse ? studentResponse.answer : 'NO_ANSWER',
+            is_correct: studentResponse ? studentResponse.answer === question.correct_answer : false,
+            time_spent_seconds: studentResponse ? studentResponse.timeSpent : 0
+        };
+    });
+    
+    console.log("Submitting Data:", submissionData);
+    
+    fetch(APPS_SCRIPT_WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(submissionData),
+    })
+    .then(() => {
+        console.log("Submission successful.");
+        quizArea.classList.add('hidden');
+        confirmationScreen.classList.remove('hidden');
+    })
+    .catch(error => {
+        console.error('Error submitting quiz:', error);
+        alert('There was an error submitting your quiz. Please try again.');
+        submitButton.textContent = "Submit Quiz";
+        submitButton.disabled = false;
+    });
 }
 
 // --- DUMMY DATA ---
 function getDummyData() {
-    // This uses the dummy data you provided to make the preview work.
     return [
-        {"question_id":"EOC-M-C1-AlgebraBasics-Q1","quiz_name":"EOC-M-C1-AlgebraBasics","subject":"Math","domain":"Algebra","skill_tag":"Linear equations in 1 variable","difficulty":"Easy","question_text":"If 5x - 7 = 28, what is the value of x?","image_url":"","option_a":"5","option_b":"7","option_c":"9","option_d":"35","correct_answer":"7","explanation_original":"Add 7 to both sides...","explanation_ai_enhanced":"This is a two-step linear equation..."},
-        {"question_id":"EOC-M-C1-AlgebraBasics-Q2","quiz_name":"EOC-M-C1-AlgebraBasics","subject":"Math","domain":"Algebra","skill_tag":"Linear inequalities","difficulty":"Medium","question_text":"Which of the following numbers is a solution to the inequality 3(y - 2) < 15?","image_url":"","option_a":"-2","option_b":"7","option_c":"8","option_d":"10","correct_answer":"-2","explanation_original":"Distribute the 3 to get 3y - 6 < 15...","explanation_ai_enhanced":"To solve the inequality..."},
-        {"question_id":"EOC-M-C2-Geometry-Q1","quiz_name":"EOC-M-C2-Geometry","subject":"Math","domain":"Geometry and Trigonometry","skill_tag":"Area and volume","difficulty":"Easy","question_text":"A rectangular prism has a length of 6 cm, a width of 4 cm, and a height of 5 cm. What is the volume of the prism?","image_url":"","option_a":"15 cm³","option_b":"24 cm³","option_c":"120 cm³","option_d":"150 cm³","correct_answer":"120 cm³","explanation_original":"The volume of a rectangular prism is...","explanation_ai_enhanced":"The formula for the volume..."},
-        {"question_id":"CB-T1-M1-Q1","quiz_name":"CB-T1-M1","subject":"Math","domain":"Algebra","skill_tag":"Linear equations in 1 variable","difficulty":"Easy","question_text":"If 3x + 9 = 15, what is the value of 6x?","image_url":"","option_a":"2","option_b":"6","option_c":"12","option_d":"18","correct_answer":"12","explanation_original":"First, solve for x...","explanation_ai_enhanced":"This is a two-step problem..."}
+        {"question_id":"EOC-M-C1-AlgebraBasics-Q1","quiz_name":"EOC-M-C1-AlgebraBasics","subject":"Math","domain":"Algebra","skill_tag":"Linear equations in 1 variable","difficulty":"Easy","question_text":"If 5x - 7 = 28, what is the value of x?","image_url":"","option_a":"5","option_b":"7","option_c":"9","option_d":"35","correct_answer":"7","explanation_original":"Add 7 to both sides..."},
+        {"question_id":"EOC-M-C1-AlgebraBasics-Q2","quiz_name":"EOC-M-C1-AlgebraBasics","subject":"Math","domain":"Algebra","skill_tag":"Linear inequalities","difficulty":"Medium","question_text":"Which of the following numbers is a solution to the inequality 3(y - 2) < 15?","image_url":"","option_a":"-2","option_b":"7","option_c":"8","option_d":"10","correct_answer":"-2","explanation_original":"Distribute the 3..."}
     ];
 }

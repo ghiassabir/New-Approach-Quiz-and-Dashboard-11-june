@@ -1,6 +1,6 @@
 // --- CONFIGURATION ---
 // IMPORTANT: Replace these placeholder URLs with your actual URLs.
-const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/ghiassabir/New-Approach-Quiz-and-Dashboard-11-june/refs/heads/main/data/question_bank.csv'; // e.g., https://raw.githubusercontent.com/your-username/your-repo/main/data/question_bank.csv
+const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/ghiassabir/New-Approach-Quiz-and-Dashboard-11-june/main/data/question_bank.csv'; // e.g., https://raw.githubusercontent.com/your-username/your-repo/main/data/question_bank.csv
 const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwAA7VRzbnJy4XMLJUMlS6X4aqUC2acuQQLbOL1VbV--m6sdXUJ17MswbI855eFTSxd/exec';
 
 // --- DOM ELEMENT REFERENCES ---

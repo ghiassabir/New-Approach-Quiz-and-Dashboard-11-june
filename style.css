@@ -1,0 +1,54 @@
+body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+.sathub-header { background-color: #2a5266; color: #f0f0f0; }
+.sathub-header-title { color: #ffd700; }
+.quiz-container { max-width: 1200px; margin: 2rem auto; }
+.answer-option { border: 2px solid #e5e7eb; transition: all 0.2s ease-in-out; }
+.answer-option:hover { border-color: #3b82f6; background-color: #eff6ff; }
+.answer-option.selected { border-color: #2a5266; background-color: #e0e7ff; font-weight: 500; }
+.progress-bar-bg { background-color: #e5e7eb; }
+.progress-bar-fill { background-color: #2a5266; transition: width 0.3s ease-in-out; }
+.nav-button { background-color: #2a5266; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; transition: background-color 0.2s; }
+.nav-button:hover:not(:disabled) { background-color: #3a687a; }
+.nav-button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+
+/* Bluebook Simulator Specific Styles */
+.question-nav-btn {
+    border: 1px solid #ccc;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+.question-nav-btn.answered {
+    background-color: #d1fae5;
+    border-color: #10b981;
+}
+.question-nav-btn.unanswered {
+    background-color: #f3f4f6; /* A neutral state for visited but unanswered */
+}
+.question-nav-btn.marked {
+    box-shadow: 0 0 0 3px #f59e0b inset; /* Inset shadow for a flag effect */
+}
+.question-nav-btn.current {
+    background-color: #60a5fa;
+    color: white;
+    border-color: #2563eb;
+}
+.tool-button {
+    background: none;
+    border: 2px solid transparent;
+    font-size: 1.5rem;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.tool-button:hover {
+    background-color: #f3f4f6;
+}
+.tool-button.active {
+    color: #f59e0b;
+    background-color: #fef3c7;
+}

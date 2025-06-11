@@ -56,7 +56,7 @@ function startQuiz() {
     const urlParams = new URLSearchParams(window.location.search);
     let quizName = urlParams.get('quiz');
     if (!quizName) {
-        quizName = "EOC-M-C1-AlgebraBasics"; // Fallback for testing
+        quizName = "EOC-R-C1-VocabInContext"; // Fallback for testing
         alert(`No quiz name found in URL. Loading default test: ${quizName}`);
     }
 

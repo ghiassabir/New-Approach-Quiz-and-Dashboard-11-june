@@ -56,7 +56,7 @@ function startQuiz() {
     const urlParams = new URLSearchParams(window.location.search);
     let quizName = urlParams.get('quiz');
     if (!quizName) {
-        quizName = "CB-T4-RW-M1"; // Fallback for testing
+        quizName = "EOC-M-C5-RatioProportion"; // Fallback for testing
         alert(`No quiz name found in URL. Loading default test: ${quizName}`);
     }
 

@@ -56,7 +56,7 @@ function startQuiz() {
     const urlParams = new URLSearchParams(window.location.search);
     let quizName = urlParams.get('quiz');
     if (!quizName) {
-        quizName = "CBQ-M-A-LEIOV"; // Fallback for testing
+        quizName = "CBQ-SQ-M"; // Fallback for testing
         alert(`No quiz name found in URL. Loading default test: ${quizName}`);
     }
 

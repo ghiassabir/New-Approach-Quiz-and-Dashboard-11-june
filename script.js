@@ -51,7 +51,7 @@ function startQuiz() {
     const urlParams = new URLSearchParams(window.location.search);
     let quizName = urlParams.get('quiz');
     if (!quizName) {
-        quizName = "CBQ-SQ-M"; // Fallback for testing
+        quizName = "Sample-Math-Quiz"; // Fallback for testing
     }
 
     quizTitle.textContent = quizName.replace(/_/g, ' ');
@@ -62,23 +62,28 @@ function loadQuestions(quizName) {
     startButton.textContent = "Loading...";
     startButton.disabled = true;
 
-    // For a live site, you would use this Papa.parse with the GITHUB_CSV_URL
-    // Papa.parse(GITHUB_CSV_URL, { ... });
-
-    // For this blueprint, we use embedded dummy data to make it runnable
-    const allData = getDummyData();
-    currentQuizQuestions = allData.filter(q => q.quiz_name === quizName);
-
-    if (currentQuizQuestions.length > 0) {
-        welcomeScreen.classList.add('hidden');
-        quizArea.classList.remove('hidden');
-        buildQuestionNavigator();
-        renderQuestion();
-    } else {
-        alert(`Error: No questions found for quiz: ${quizName}`);
-    }
+    Papa.parse(GITHUB_CSV_URL, {
+        download: true,
+        header: true,
+        complete: function(results) {
+            allQuestions = results.data;
+            currentQuizQuestions = allQuestions.filter(q => q.quiz_name === quizName);
+            if (currentQuizQuestions.length > 0) {
+                welcomeScreen.classList.add('hidden');
+                quizArea.classList.remove('hidden');
+                buildQuestionNavigator();
+                renderQuestion();
+            } else {
+                alert(`Error: No questions found for quiz named "${quizName}".`);
+            }
+        },
+        error: (error) => console.error("Error fetching CSV:", error)
+    });
 }
 
+/**
+ * Renders the current question and triggers MathJax to format the math.
+ */
 function renderQuestion() {
     optionsContainer.innerHTML = '';
     questionImage.classList.add('hidden');
@@ -102,7 +107,7 @@ function renderQuestion() {
                 optionElement.querySelector('input').checked = true;
                 handleOptionSelection();
             });
-
+            
             if (studentAnswers[question.question_id] && studentAnswers[question.question_id].answer === optionText) {
                 optionElement.classList.add('selected');
                 optionElement.querySelector('input').checked = true;
@@ -111,11 +116,12 @@ function renderQuestion() {
         }
     });
     
-    // --- THIS IS THE CRITICAL FIX FOR MATHJAX ---
-    // After new content is added to the DOM, we tell MathJax to look for it and render it.
+    // --- THIS IS THE CRITICAL FIX ---
+    // After new content is injected, we tell MathJax to re-scan the page.
     if (window.MathJax) {
         MathJax.typesetPromise();
     }
+    // --- END OF FIX ---
 
     updateUI();
     questionStartTime = Date.now();
@@ -201,6 +207,7 @@ function jumpToQuestion(index) {
     renderQuestion();
 }
 
+// --- EVENT LISTENERS FOR NAVIGATION ---
 nextButton.addEventListener('click', () => { recordAnswer(); jumpToQuestion(currentQuestionIndex + 1); });
 prevButton.addEventListener('click', () => { recordAnswer(); jumpToQuestion(currentQuestionIndex - 1); });
 submitButton.addEventListener('click', () => { recordAnswer(); submitQuiz(); });
@@ -211,11 +218,3 @@ markReviewBtn.addEventListener('click', () => {
     updateNavigator();
     updateMarkForReviewButton();
 });
-
-// Mock Data Function for testing
-function getDummyData() {
-    return [
-        { quiz_name: "Sample-Math-Quiz", question_id: "MQ1", question_text: "What is the value of $P$ in the formula $P = \\frac{V^2}{R}$ when $V=12$ and $R=3$?", option_a: "$P=48$", option_b: "$P=36$", option_c: "$P=144$", option_d: "$P=24$", correct_answer: "$P=48$" },
-        { quiz_name: "Sample-Math-Quiz", question_id: "MQ2", question_text: "If $x^2 = 144$, what is the value of $x$?", option_a: "12", option_b: "10", option_c: "24", option_d: "72", correct_answer: "12" }
-    ];
-}

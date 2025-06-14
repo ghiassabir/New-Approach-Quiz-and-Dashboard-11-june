@@ -1,31 +1,77 @@
-body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-.sathub-header { background-color: #2a5266; color: #f0f0f0; }
-.sathub-header-title { color: #ffd700; }
-.quiz-container { max-width: 1200px; margin: 2rem auto; }
-.answer-option { border: 2px solid #e5e7eb; transition: all 0.2s ease-in-out; }
-.answer-option:hover { border-color: #3b82f6; background-color: #eff6ff; }
-.answer-option.selected { border-color: #2a5266; background-color: #e0e7ff; font-weight: 500; }
-.progress-bar-bg { background-color: #e5e7eb; }
-.progress-bar-fill { background-color: #2a5266; transition: width 0.3s ease-in-out; }
-.nav-button { background-color: #2a5266; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; transition: background-color 0.2s; }
-.nav-button:hover:not(:disabled) { background-color: #3a687a; }
-.nav-button:disabled { background-color: #9ca3af; cursor: not-allowed; }
-
-/* Bluebook Simulator Specific Styles */
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: #f0f2f5; 
+}
+.sathub-header { 
+    background-color: #2a5266; 
+    color: #f0f0f0; 
+}
+.sathub-header-title { 
+    color: #ffd700; 
+}
+.quiz-container { 
+    max-width: 1200px; 
+    margin: 2rem auto; 
+}
+.answer-option { 
+    border: 2px solid #e5e7eb; 
+    transition: all 0.2s ease-in-out;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+.answer-option:hover { 
+    border-color: #3b82f6; 
+    background-color: #eff6ff; 
+}
+.answer-option.selected { 
+    border-color: #2a5266; 
+    background-color: #e0e7ff; 
+    font-weight: 500;
+}
+.progress-bar-bg { 
+    background-color: #e5e7eb; 
+    height: 0.625rem;
+    border-radius: 9999px;
+}
+.progress-bar-fill { 
+    background-color: #2a5266; 
+    transition: width 0.3s ease-in-out; 
+    height: 100%;
+    border-radius: 9999px;
+}
+.nav-button { 
+    background-color: #2a5266; 
+    color: white; 
+    padding: 0.75rem 1.5rem; 
+    border-radius: 0.5rem; 
+    font-weight: 600; 
+    transition: background-color 0.2s; 
+}
+.nav-button:hover:not(:disabled) { 
+    background-color: #3a687a; 
+}
+.nav-button:disabled { 
+    background-color: #9ca3af; 
+    cursor: not-allowed; 
+}
 .question-nav-btn {
     border: 1px solid #ccc;
     transition: all 0.2s;
     font-weight: 500;
+    width: 40px;
+    height: 40px;
+    border-radius: 0.25rem;
 }
 .question-nav-btn.answered {
     background-color: #d1fae5;
     border-color: #10b981;
 }
 .question-nav-btn.unanswered {
-    background-color: #f3f4f6; /* A neutral state for visited but unanswered */
+    background-color: #f3f4f6;
 }
 .question-nav-btn.marked {
-    box-shadow: 0 0 0 3px #f59e0b inset; /* Inset shadow for a flag effect */
+    box-shadow: 0 0 0 3px #f59e0b inset;
 }
 .question-nav-btn.current {
     background-color: #60a5fa;

@@ -51,7 +51,7 @@ function startQuiz() {
     const urlParams = new URLSearchParams(window.location.search);
     let quizName = urlParams.get('quiz');
     if (!quizName) {
-        quizName = "Sample-Math-Quiz"; // Fallback for testing
+        quizName = "CBQ-SQ-M"; // Fallback for testing
     }
 
     quizTitle.textContent = quizName.replace(/_/g, ' ');
